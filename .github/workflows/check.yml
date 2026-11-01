@@ -1,0 +1,66 @@
+name: check
+
+# 最小の CI（数十秒で終わるものだけ）。重い検査（Docker・Gazebo・学習）はここでは回さない。
+# 実測はローカルの scripts/local_check.sh が担当する。
+# gitleaks は MIT の CLI 本体を版と sha256 で固定して直接使う（Marketplace 版 Action は使わない）。
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7（= v7.0.1）。タグは動くので commit で固定
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks (pinned, sha256 verified)
+        run: |
+          set -euo pipefail
+          GITLEAKS_VERSION=8.30.1
+          GITLEAKS_SHA256=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          curl -sSfL --retry 3 --retry-all-errors --max-time 120 \
+            -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo install /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Secrets scan (full history)
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse --is-shallow-repository)" != "false" ]; then
+            echo "::error::shallow clone. 全履歴を走査できない"; exit 1
+          fi
+          set +e
+          gitleaks git . --no-banner --redact=100 --exit-code 2
+          RC=$?
+          set -e
+          case "${RC}" in
+            0) echo "secrets: none" ;;
+            2) echo "::error::秘密を検出。鍵をローテーションすること"; exit 1 ;;
+            *) echo "::error::gitleaks failed (rc=${RC})"; exit 1 ;;
+          esac
+
+      - name: Python files compile
+        run: |
+          set -euo pipefail
+          python3 -m compileall -q .
+          echo "compileall: ok"
+
+      - name: Unit tests
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -v

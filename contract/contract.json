@@ -1,0 +1,230 @@
+{
+  "contract_version": "0.3.0",
+  "npz_schema": 1,
+  "npz_schema_sha256": "326c9caeec7a29c01aa7d1b3c99472f1dc012c1a7dd94261aac0ba2127b06176",
+  "joint_names": [
+    "crane_plus_joint1",
+    "crane_plus_joint2",
+    "crane_plus_joint3",
+    "crane_plus_joint4",
+    "crane_plus_joint_hand"
+  ],
+  "joint_limits_rad": {
+    "crane_plus_joint1": [-2.617992, 2.617992],
+    "crane_plus_joint2": [-1.824740, 1.783725],
+    "crane_plus_joint3": [-2.556556, 2.454280],
+    "crane_plus_joint4": [-1.840099, 1.768366],
+    "crane_plus_joint_hand": [-0.708952, 0.667937]
+  },
+  "gripper": {
+    "degrees_of_freedom": 1,
+    "note": "動く関節は crane_plus_joint_hand の 1 本だけ（mimic なし・endtip は fixed）。右だけ・左だけ開くことはできない"
+  },
+  "controller": {
+    "update_rate_hz": 100,
+    "arm_controller_joints": [
+      "crane_plus_joint1",
+      "crane_plus_joint2",
+      "crane_plus_joint3",
+      "crane_plus_joint4"
+    ],
+    "gripper_controller_joints": ["crane_plus_joint_hand"]
+  },
+  "units": "rad",
+  "dtype_compute": "float64",
+  "tolerance": {
+    "env_abs": 1e-6,
+    "time_abs_s": 1e-6,
+    "target_abs_rad": 1e-6
+  },
+  "vectors": {
+    "observation_state": {
+      "dim": 5,
+      "order": "joint_names",
+      "meaning": "関節角 (rad)。/joint_states を名前で引いて joint_names の並びに並べ替えた値"
+    },
+    "observation_environment_state": {
+      "dim": 3,
+      "order": ["sin_phase", "cos_phase", "progress"],
+      "meaning": "[sin φ, cos φ, progress]。φ は拍位相、progress は曲の進行度 0〜1"
+    },
+    "action": {
+      "dim": 5,
+      "order": "joint_names",
+      "meaning": "絶対値 (rad) の関節目標。時刻 t_k 以前に最後に出た目標を保持した値"
+    }
+  },
+  "recording": {
+    "fps": 50,
+    "grid": "t_k = t0 + k/fps (k = 0..N-1)",
+    "n_samples": "N = floor(duration_s * fps + 1e-9)",
+    "hold_rule": "格子点では、その時刻以前で最新の値を使う",
+    "time_source": "header.stamp（シム時刻。全ノード use_sim_time）",
+    "t0_rule": "再生ノードが最初に出した /crane_dance/joint_target の header.stamp を t0 とする。再生ノードはシム時刻が 0 でなくなり、joint_target の購読者の中にノード名に rosbag2 を含むもの（記録側）が見えてから一定時間待って最初の 1 本を出す（購読者の数だけでは、制御器への橋渡しも数に入るので足りない）。これは目安で、最後の砦は episode_rule",
+    "grid_index": "時刻は整数のナノ秒で扱う。k = (now_ns - t0_ns) * fps // 1e9（fps は 1e9 を割り切る）。now() は k を決めるときだけ使い、header.stamp には t_k_ns = t0_ns + k * (1e9 // fps) を入れる。k は単調増加・同じ k を二度出さない・飛んだ k は出さずに数える・シム時刻の後戻りを見つけたらそのエピソードを無効にして止める（contract_math.grid_steps）",
+    "episode_rule": "1 本の bag は 1 エピソード。1 エピソードと認めるには次の 2 つが両方要る。①完全性：joint_target の本数がちょうど N（recording.n_samples・曲の全長）で、stamp が最初の stamp から 1/fps 刻みで隙間なく続く（k = 0..N-1 の連続・飛びも重複も無い）（contract_math.episode_complete）。②姿勢の照合：最初の stamp を t0 として、各 stamp で振付の補間値を計算し直し、joint_target.position と tolerance.target_abs_rad 以内（contract_math.t0_consistent）。②だけでは判定できない場合がある：止まっている区間の取りこぼしや、同じ姿勢で始まる 2 本目の混入は姿勢が一致してしまう（振付の最初と最後が同じ姿勢のとき特に）。そのため①を欠かせない。どちらかが偽ならそのエピソードは無効にして録り直す（t0 を計算で戻さない）。正解例は golden_t0",
+    "clock_requirement": "/clock の刻みは 1/fps より細かいこと",
+    "record_command": "ros2 bag record --use-sim-time /joint_states /crane_dance/joint_target",
+    "record_topics": ["/joint_states", "/crane_dance/joint_target"],
+    "record_note": "この記録の決まりは、学習用に 1 回分（1 エピソード）を記録するときのもの。時間のずれの計測では /clock も一緒に記録する（README の計測の手順）。/clock は記録しない（毎秒約 1000 本になるため。時刻は各メッセージの header.stamp を使う）。--use-sim-time のために /clock は流れている必要がある。前提：/joint_states の stamp もシム時刻であること（joint_state_broadcaster が use_sim_time で動くこと）を実機で確かめる。1 回の収録の実時間比は bag からは出せないので、要るなら再生ノードのログに壁時計とシム時刻を出す"
+  },
+  "beat_phase": {
+    "tau": "τ = t - t0",
+    "table": "beat_times_s = [b_0 < b_1 < ...]（狭義単調増加）",
+    "inside": "b_i <= τ < b_{i+1} のとき φ = 2π (τ - b_i) / (b_{i+1} - b_i)",
+    "outside": "表の前後は端の拍間隔のまま延ばす。φ = 2π frac((τ - b_端) / 端の拍間隔)、frac(x) = x - floor(x)。前は b_端 = b_0・間隔 = b_1 - b_0、後は b_端 = b_最後・間隔 = b_最後 - b_最後の1つ前",
+    "search": "区間探しは bisect（bisect_right(b, τ) - 1）",
+    "progress": "progress = clamp01(τ / duration_s)",
+    "min_beat_interval_s": 0.1,
+    "computed_by": "共通モジュール contract_math（npz を書くノード）。トピックに流さない"
+  },
+  "npz": {
+    "layout": "平らな 10 個の鍵（データ 4 つ＋メタ 6 つ）。入れ子なし・余分な鍵なし。np.savez か np.savez_compressed。np.load(allow_pickle=False) で読めること（文字列は numpy の Unicode 型・object 型にしない・bytes にしない）",
+    "keys": {
+      "observation_state": {
+        "shape": ["N", 5], "dtype": "float32", "lerobot_name": "observation.state"
+      },
+      "observation_environment_state": {
+        "shape": ["N", 3], "dtype": "float32", "lerobot_name": "observation.environment_state"
+      },
+      "action": {"shape": ["N", 5], "dtype": "float32", "lerobot_name": "action"},
+      "timestamp": {"shape": ["N"], "dtype": "float64", "lerobot_name": "timestamp"}
+    },
+    "timestamp_meaning": "t0 からの相対秒",
+    "meta": {
+      "t0_s": {"dtype": "float64", "shape": []},
+      "duration_s": {"dtype": "float64", "shape": []},
+      "fps": {"dtype": "int64", "shape": []},
+      "beat_times_s": {"dtype": "float64", "shape": ["M"]},
+      "contract_version": {"dtype": "str", "shape": []},
+      "choreography_sha256": {"dtype": "str", "shape": [], "length": 64}
+    }
+  },
+  "lerobot": {
+    "task": "dance_v1",
+    "episodes_per_npz": 1,
+    "k_start": 0,
+    "timestamp_use": "npz の timestamp は LeRobot の add_frame に渡さない。k/fps との照合だけに使う",
+    "dataset_admission": "データセットに入れてよい npz は、メタの choreography_sha256 が全部同じで、いまの choreography.json の sha256 と一致するものだけ"
+  },
+  "topics": {
+    "joint_target": {
+      "name": "/crane_dance/joint_target",
+      "type": "sensor_msgs/msg/JointState",
+      "fields": "name は joint_names の順・position だけ使い velocity と effort は空・header.stamp は t_k",
+      "qos": {"reliability": "reliable", "durability": "volatile", "history": "keep_last", "depth": 10},
+      "rate": "格子点ごと（recording.fps）",
+      "note": "受け取る側は同じ stamp を二度受けても結果が変わらない作り。制御器へは stamp を軌道の時刻に写さず即時の指令として渡す。choreography と npz の再生では、joint_target は計画値の記録で、制御器への指令は t0 に送る 1 本の軌道（header.stamp = t0）"
+    },
+    "joint_states": {
+      "name": "/joint_states",
+      "type": "sensor_msgs/msg/JointState",
+      "note": "名前で引いて joint_names の並びに並べ替える"
+    },
+    "debug": {
+      "prefix": "/crane_dance/debug/",
+      "note": "デバッグ用に何かを出すときはこの接頭辞の下だけ。契約の外で、照合しない"
+    }
+  },
+  "golden": {
+    "duration_s": 10,
+    "tables": {
+      "A": [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0],
+      "B": [0.1, 0.6, 1.1, 1.6, 2.1, 2.6, 3.1, 3.6, 4.1, 4.6, 5.1, 5.6, 6.1, 6.6, 7.1, 7.6, 8.1, 8.6, 9.1, 9.6, 10.1],
+      "C": [0.0, 0.5, 1.5]
+    },
+    "rows": [
+      {"table": "A", "tau": -1.0, "sin": 0.0, "cos": 1.0, "progress": 0.0},
+      {"table": "A", "tau": 0.0, "sin": 0.0, "cos": 1.0, "progress": 0.0},
+      {"table": "A", "tau": 0.125, "sin": 1.0, "cos": 0.0, "progress": 0.0125},
+      {"table": "A", "tau": 0.25, "sin": 0.0, "cos": -1.0, "progress": 0.025},
+      {"table": "A", "tau": 11.0, "sin": 0.0, "cos": 1.0, "progress": 1.0},
+      {"table": "B", "tau": 0.225, "sin": 1.0, "cos": 0.0, "progress": 0.0225},
+      {"table": "C", "tau": 0.125, "sin": 1.0, "cos": 0.0, "progress": 0.0125},
+      {"table": "C", "tau": 1.0,"sin": 0.0, "cos": -1.0, "progress": 0.1},
+      {"table": "C", "tau": 2.0, "sin": 0.0, "cos": -1.0, "progress": 0.2}
+    ]
+  },
+  "golden_grid": {
+    "fps": 50,
+    "t0_ns": 100000000000,
+    "cases": [
+      {"name": "順調", "nows_ns": [100000000000, 100020000000, 100040000000, 100060000000], "emit": [0, 1, 2, 3], "skipped": 0, "invalid_at": null},
+      {"name": "t0 より前", "nows_ns": [99990000000, 100000000000, 100020000000], "emit": [0, 1], "skipped": 0, "invalid_at": null},
+      {"name": "同じ k", "nows_ns": [100000000000, 100005000000, 100020000000, 100021000000], "emit": [0, 1], "skipped": 0, "invalid_at": null},
+      {"name": "飛び", "nows_ns": [100000000000, 100020000000, 100080000000, 100100000000], "emit": [0, 1, 4, 5], "skipped": 2, "invalid_at": null},
+      {"name": "後戻り", "nows_ns": [100000000000, 100020000000, 100010000000, 100040000000], "emit": [0, 1], "skipped": 0, "invalid_at": 2},
+      {"name": "最初が遅れる", "nows_ns": [100050000000, 100060000000], "emit": [2, 3], "skipped": 2, "invalid_at": null},
+      {"name": "境目の 1 ns 前", "nows_ns": [100000000000, 100019999999, 100020000000], "emit": [0, 1], "skipped": 0, "invalid_at": null}
+    ]
+  },
+  "golden_interp": {
+    "keyframes": [
+      {"time_s": 1.0, "joints_rad": [0, 0, 0, 0, 0.2]},
+      {"time_s": 2.0, "joints_rad": [0, 0, -2.0, 0, 0.2]},
+      {"time_s": 3.0, "joints_rad": [0, 0, -2.0, 0, 0.2]},
+      {"time_s": 4.0, "joints_rad": [0, 0, 0, 0, -0.4]}
+    ],
+    "rows": [
+      {"t": 0.0, "want": [0, 0, 0, 0, 0.2]},
+      {"t": 1.0, "want": [0, 0, 0, 0, 0.2]},
+      {"t": 1.5, "want": [0, 0, -1.0, 0, 0.2]},
+      {"t": 2.0, "want": [0, 0, -2.0, 0, 0.2]},
+      {"t": 2.5, "want": [0, 0, -2.0, 0, 0.2]},
+      {"t": 3.0, "want": [0, 0, -2.0, 0, 0.2]},
+      {"t": 3.75, "want": [0, 0, -0.5, 0, -0.25]},
+      {"t": 4.0, "want": [0, 0, 0, 0, -0.4]},
+      {"t": 9.0, "want": [0, 0, 0, 0, -0.4]}
+    ]
+  },
+  "golden_t0": {
+    "fps": 50,
+    "t0_ns": 10000000000,
+    "n": 250,
+    "note": "golden_interp.keyframes（cases の keyframes が same_ends なら keyframes_same_ends）を使い、k = 0..n-1 の stamp = grid_time_ns(k, t0_ns, fps) と position = target_at(k / fps) の列を検査器とテストがその場で作る。drop_first は先頭から落とす本数、keep_last は末尾だけ残す本数、append_second_t0_ns と append_second_n は 2 本目の列（同じ作り方・先頭から n 本）を後ろに足す。1 エピソードと認めるのは consistent（t0_consistent）と complete（episode_complete）の両方が真のときだけ",
+    "keyframes_same_ends": [
+      {"time_s": 1.0, "joints_rad": [0, 0, 0, 0, 0.2]},
+      {"time_s": 2.0, "joints_rad": [0, 0, -2.0, 0, 0.2]},
+      {"time_s": 4.5, "joints_rad": [0, 0, 0, 0, 0.2]}
+    ],
+    "cases": [
+      {"name": "全部ある", "drop_first": 0, "consistent": true, "complete": true},
+      {"name": "最初の 60 本を落とした", "drop_first": 60, "consistent": false, "complete": false},
+      {"name": "動き出す前の 40 本を落とした", "drop_first": 40, "consistent": false, "complete": false},
+      {"name": "2 本目が混入", "append_second_t0_ns": 20000000000, "consistent": false, "complete": false},
+      {"name": "同じ姿勢で始まり終わる・全部ある", "keyframes": "same_ends", "drop_first": 0, "consistent": true, "complete": true},
+      {"name": "2 本目の止まっている先頭 1 秒を足した（姿勢だけでは見分けられない）", "keyframes": "same_ends", "append_second_t0_ns": 20000000000, "append_second_n": 50, "consistent": true, "complete": false},
+      {"name": "最後の止まっている区間だけ（姿勢だけでは見分けられない）", "keyframes": "same_ends", "keep_last": 25, "consistent": true, "complete": false}
+    ]
+  },
+  "choreography_format": {
+    "file": "contract/choreography.json",
+    "song_keys": ["duration_s", "beat_times_s", "downbeat_times_s", "source"],
+    "source_keys": ["kind", "method", "audio_sha256"],
+    "source_kinds": ["provisional", "measured"],
+    "keyframe_keys": ["name", "label", "beat_index", "time_s", "joints_rad", "primary_joints", "measured_in_gazebo"],
+    "interpolation": "キーフレームの間は関節ごとに直線補間。最初のキーフレームより前は最初の値、最後より後は最後の値を保つ（contract_math.target_at）",
+    "rules": "time_s は beat_times_s[beat_index] かつ downbeat_times_s のどれか。joints_rad は 5 つで joint1 は 0。primary_joints は空か joint_names のどれか"
+  },
+  "beats_format": {
+    "file": "act/measurements/beats.json",
+    "keys": ["bpm", "beat_times_s", "downbeat_times_s", "duration_s", "sections", "warnings", "source"],
+    "sections_item_keys": ["start_s", "end_s", "bpm", "meter"],
+    "source_keys": [
+      "audio_sha256", "librosa_version", "sample_rate_hz", "hop_length", "downbeat_method",
+      "load_kwargs", "beat_track_kwargs", "soxr_version"
+    ],
+    "source_subkeys": {
+      "load_kwargs": ["sr", "mono", "res_type", "offset", "duration"],
+      "beat_track_kwargs": ["start_bpm", "tightness", "trim", "units"]
+    },
+    "definitions": {
+      "sample_rate_hz": "解析に使ったサンプリング周波数（load_kwargs.sr と同じ値）",
+      "bpm": "拍番号 i と拍の時刻 t_i に直線 t_i ≈ a·i + b を当てはめたときの 60 ÷ a（a は 1 拍あたりの秒）。参考値で、拍位相の計算には使わない"
+    }
+  },
+  "measured_in_gazebo": {
+    "tolerance_rad": null,
+    "note": "値の出どころの印（Gazebo で実測した値なら true）。許容値は決めていない"
+  }
+}

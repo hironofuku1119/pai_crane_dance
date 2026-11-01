@@ -1,0 +1,46 @@
+# 振付 v2 の最初の本番 3 本と E1 を回す設定。共通：データ seed 0・20 本／学習 seed 1000・lr 1e-5（ACT の既定）・batch 8・10000 step・保存 1000 ごと。
+# 元の評価は eval_act.py（m 1・10、τ 0.02〜0.15）で、ここの既定の 3 列（開ループ m10・閉ループ m10 τ0.06・m1＋ens）とは列が違う。
+[batch]
+description = "v2 本番 3 本（全部入り・拍位相なし・進行度なし）と E1（state 定数）・lr1e-5・b8・10k"
+
+[[run]]
+name = "v2-full"
+description = "全部入り（10000 step の開ループの出力を最初の動画に使った）"
+[run.train]
+steps = 10000
+save_freq = 1000
+[run.eval]
+ckpts = [1000, 3000, 6000, 10000]
+
+[[run]]
+name = "v2-no_phase"
+description = "拍位相を定数に"
+[run.data]
+env_variant = "no_phase"
+[run.train]
+steps = 10000
+save_freq = 1000
+[run.eval]
+ckpts = [1000, 3000, 6000, 10000]
+
+[[run]]
+name = "v2-no_progress"
+description = "進行度を定数に"
+[run.data]
+env_variant = "no_progress"
+[run.train]
+steps = 10000
+save_freq = 1000
+[run.eval]
+ckpts = [1000, 3000, 6000, 10000]
+
+[[run]]
+name = "e1-no_state"
+description = "state 定数（lr 1e-5）"
+[run.data]
+state_mode = "constant"
+[run.train]
+steps = 10000
+save_freq = 1000
+[run.eval]
+ckpts = [3000, 10000]

@@ -1,0 +1,16 @@
+# compose.yaml — 最終課題の ROS 2 + Gazebo（講座イメージを digest で固定）
+# ポートは全部 127.0.0.1 だけに公開する（LAN に開かない）。VNC のポートは公開しない。
+services:
+  ros:
+    image: airobotbook/ros2-desktop-ai-robot-book-humble@sha256:b58ec74c019aacd9ce4818fa25fc5a9e0a1f22f8c9cd1f5260994bf15cd9eb63
+    platform: linux/amd64
+    container_name: pai_fin2_ros
+    shm_size: "512m"
+    environment:
+      RESOLUTION: "1920x1080"
+      ROS_LOCALHOST_ONLY: "1"
+    ports:
+      - "127.0.0.1:6081:80"
+    volumes:
+      - ./:/workspace:ro
+      - ./ros:/workspace/ros

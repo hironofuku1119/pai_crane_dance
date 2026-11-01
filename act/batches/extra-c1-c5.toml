@@ -1,0 +1,81 @@
+# 追加の比較 c1〜c5 を回す設定。
+# 共通：データ seed 0・20 本／lr 1e-4（c5 だけ 3e-4・backbone も同じ値）・batch 32・20000 step・chunk 50・保存 5000 ごと。
+[batch]
+description = "追加 c1〜c5：seed 違い・VAE なし・lr 3e-4"
+
+[[run]]
+name = "c1"
+description = "B1 と同じ設定で学習 seed 2000"
+[run.data]
+state_mode = "lagged"
+[run.train]
+steps = 20000
+batch_size = 32
+seed = 2000
+save_freq = 5000
+lr = 1e-4
+lr_backbone = 1e-4
+[run.eval]
+ckpts = [5000, 10000, 20000]
+
+[[run]]
+name = "c2"
+description = "state 定数・VAE なし"
+[run.data]
+state_mode = "constant"
+[run.train]
+steps = 20000
+batch_size = 32
+seed = 1000
+save_freq = 5000
+lr = 1e-4
+lr_backbone = 1e-4
+use_vae = false
+[run.eval]
+ckpts = [5000, 10000, 20000]
+
+[[run]]
+name = "c3"
+description = "state あり（B1 のデータ）・VAE なし"
+[run.data]
+state_mode = "lagged"
+[run.train]
+steps = 20000
+batch_size = 32
+seed = 1000
+save_freq = 5000
+lr = 1e-4
+lr_backbone = 1e-4
+use_vae = false
+[run.eval]
+ckpts = [5000, 10000, 20000]
+
+[[run]]
+name = "c4"
+description = "B3 と同じ設定で学習 seed 2000"
+[run.data]
+state_mode = "constant"
+[run.train]
+steps = 20000
+batch_size = 32
+seed = 2000
+save_freq = 5000
+lr = 1e-4
+lr_backbone = 1e-4
+[run.eval]
+ckpts = [5000, 10000, 20000]
+
+[[run]]
+name = "c5"
+description = "state 定数・lr 3e-4"
+[run.data]
+state_mode = "constant"
+[run.train]
+steps = 20000
+batch_size = 32
+seed = 1000
+save_freq = 5000
+lr = 3e-4
+lr_backbone = 3e-4
+[run.eval]
+ckpts = [5000, 10000, 20000]

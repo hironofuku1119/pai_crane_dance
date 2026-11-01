@@ -1,0 +1,37 @@
+# 本番：B5（state 定数＋拍位相定数＝進行度だけ）を回す設定。
+# レポートの B5 は、このバッチ道具ができる前の道具で学習した。値はそれと同じ：
+#   データ seed 0・20 本・state 定数（keyframes[0]）・拍位相を定数（no_phase）／学習 seed 1000・lr 1e-4（backbone も）・
+#   batch 32・20000 step・chunk 50・VAE あり・保存 5000 ごと。
+# 学習データの npz は、元の学習データと配列が一致することを確かめた（contract_version の文字列だけ違う）。
+# 学習をやり直したときの重みの一致は確かめていない（MPS は完全な決定性を保証しない）。
+#   uv run python scripts/run_batch.py --config batches/b5.toml --dry-run   # 計画だけ
+#   uv run python scripts/run_batch.py --config batches/b5.toml             # 本番（MPS で約 33 分＋評価と書き出し）
+[batch]
+description = "本番 B5：state 定数＋拍位相定数（進行度だけ）・lr1e-4・b32・20k"
+
+[[run]]
+name = "b5"
+description = "state 定数＋拍位相定数（進行度だけ）・lr1e-4・b32・20k（保存 5000 ごと）"
+
+[run.data]
+seed = 0
+episodes = 20
+state_mode = "constant"
+env_variant = "no_phase"
+
+[run.train]
+steps = 20000
+batch_size = 32
+seed = 1000
+save_freq = 5000
+lr = 1e-4
+lr_backbone = 1e-4
+chunk_size = 50
+
+[run.eval]
+ckpts = [5000, 10000, 20000]
+
+[run.export]
+ckpts = [20000]
+modes = ["open", "closed"]
+formats = ["npz", "yaml"]

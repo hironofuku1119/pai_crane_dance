@@ -1,0 +1,38 @@
+# act/ — Mac（Apple Silicon・MPS）で LeRobot の ACT を学習する環境の宣言（PEP 621・uv）
+# 版を上げるとき: この範囲を直す → `uv lock` → テスト
+
+[project]
+name = "act"
+version = "0.1.0"
+description = "ACT (Action Chunking Transformer) learning environment for the crane dance task (Apple Silicon / MPS)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  # 学習本体。training = dataset + wandb + accelerate / viz = rerun-sdk + foxglove-sdk
+  "lerobot[training,viz]>=0.6.1,<0.7",
+  # LeRobot 0.6.1 の範囲 (torch>=2.7,<2.12 / torchvision>=0.22,<0.27) と torchcodec 0.11 (↔ torch 2.11)
+  "torch>=2.11.0,<2.12",
+  "torchvision>=0.26.0,<0.27",
+  "torchcodec>=0.11.0,<0.12; sys_platform == 'darwin' and platform_machine == 'arm64'",
+  # numpy の交点: LeRobot <2.3 / librosa >=2.1 / numba 0.68.1 <2.6
+  "numpy>=2.1,<2.3",
+  # 音声（自作曲 WAV の拍解析）
+  "librosa>=1.0.0,<1.1",
+  "soundfile>=0.12.1",
+  # 実験管理・可視化（LeRobot extras の上限に合わせる）
+  "wandb>=0.24.0,<0.28",
+  "rerun-sdk>=0.24.0,<0.34",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.uv]
+required-version = ">=0.13"
+# macOS arm64 専用環境として解決（lock を軽くする）。他 OS で使うなら外す
+environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]

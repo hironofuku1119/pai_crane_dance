@@ -1,0 +1,284 @@
+{
+  "choreography_version": "0.2.0",
+  "joint_names": [
+    "crane_plus_joint1",
+    "crane_plus_joint2",
+    "crane_plus_joint3",
+    "crane_plus_joint4",
+    "crane_plus_joint_hand"
+  ],
+  "song": {
+    "duration_s": 31.2046,
+    "beat_times_s": [
+      0.0929,
+      0.5457,
+      1.0101,
+      1.4861,
+      1.9273,
+      2.3917,
+      2.8444,
+      3.2972,
+      3.7616,
+      4.226,
+      4.6788,
+      5.1548,
+      5.6076,
+      6.0836,
+      6.5364,
+      6.9892,
+      7.4536,
+      7.9064,
+      8.3708,
+      8.8236,
+      9.288,
+      9.7408,
+      10.1936,
+      10.658,
+      11.1224,
+      11.5751,
+      12.0395,
+      12.4923,
+      12.9451,
+      13.4095,
+      13.8623,
+      14.3267,
+      14.7911,
+      15.2439,
+      15.7083,
+      16.1611,
+      16.6255,
+      17.0783,
+      17.5311,
+      17.9955,
+      18.4599,
+      18.9243,
+      19.3771,
+      19.8182,
+      20.2942,
+      20.7586,
+      21.2114,
+      21.6758,
+      22.1286,
+      22.5814,
+      23.0458,
+      23.4986,
+      23.963,
+      24.4158,
+      24.8802,
+      25.3446,
+      25.7858,
+      26.2385,
+      26.6913,
+      27.1441,
+      27.5969,
+      28.0729,
+      28.5025,
+      28.9901,
+      29.4081,
+      29.8028
+    ],
+    "downbeat_times_s": [
+      0.0929,
+      1.9273,
+      3.7616,
+      5.6076,
+      7.4536,
+      9.288,
+      11.1224,
+      12.9451,
+      14.7911,
+      16.6255,
+      18.4599,
+      20.2942,
+      22.1286,
+      23.963,
+      25.7858,
+      27.5969,
+      29.4081
+    ],
+    "source": {
+      "kind": "measured",
+      "method": "act 5-2a の実測の写し（PR #15・act/measurements/beats.json）",
+      "audio_sha256": "fd8fc02a2d038b5c1b4e95a7a104bb3cec91cc0d164c22c547cdbed57abcb8ad"
+    }
+  },
+  "keyframes": [
+    {
+      "name": "stand_closed_0",
+      "label": "直立（曲頭・前奏）",
+      "beat_index": 0,
+      "time_s": 0.0929,
+      "joints_rad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "stand_closed_1",
+      "label": "直立（歌い出し・おじぎ開始）",
+      "beat_index": 4,
+      "time_s": 1.9273,
+      "joints_rad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "bow_closed_1",
+      "label": "おじぎ（1〜2 小節で到着）",
+      "beat_index": 12,
+      "time_s": 5.6076,
+      "joints_rad": [
+        0.0,
+        0.0,
+        -2.25,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [
+        "crane_plus_joint3"
+      ],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "stand_closed_2",
+      "label": "起き上がる（3 小節目で到着・4 小節目は止まる）",
+      "beat_index": 16,
+      "time_s": 7.4536,
+      "joints_rad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [
+        "crane_plus_joint3"
+      ],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "stand_closed_3",
+      "label": "直立のまま（開き始め）",
+      "beat_index": 20,
+      "time_s": 9.288,
+      "joints_rad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "stand_open_1",
+      "label": "グリッパを開く（5〜7 小節で到着・8 小節目は止まる）",
+      "beat_index": 32,
+      "time_s": 14.7911,
+      "joints_rad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.5236
+      ],
+      "primary_joints": [
+        "crane_plus_joint_hand"
+      ],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "stand_open_2",
+      "label": "開いたまま直立（おじぎ開始）",
+      "beat_index": 36,
+      "time_s": 16.6255,
+      "joints_rad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.5236
+      ],
+      "primary_joints": [],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "bow_open_1",
+      "label": "開いたままおじぎ（9〜10 小節で到着）",
+      "beat_index": 44,
+      "time_s": 20.2942,
+      "joints_rad": [
+        0.0,
+        0.0,
+        -2.25,
+        0.0,
+        -0.5236
+      ],
+      "primary_joints": [
+        "crane_plus_joint3"
+      ],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "bow_closed_2",
+      "label": "掴む（11〜12 小節で閉じる・13〜14 小節は止まる）",
+      "beat_index": 52,
+      "time_s": 23.963,
+      "joints_rad": [
+        0.0,
+        0.0,
+        -2.25,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [
+        "crane_plus_joint_hand"
+      ],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "bow_closed_3",
+      "label": "おじぎ・閉のまま（起き上がり開始）",
+      "beat_index": 60,
+      "time_s": 27.5969,
+      "joints_rad": [
+        0.0,
+        0.0,
+        -2.25,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [],
+      "measured_in_gazebo": false
+    },
+    {
+      "name": "stand_closed_4",
+      "label": "閉じたまま起き上がる（15 小節目で到着・16 小節目は止まる＝初期位置）",
+      "beat_index": 64,
+      "time_s": 29.4081,
+      "joints_rad": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.1745
+      ],
+      "primary_joints": [
+        "crane_plus_joint3"
+      ],
+      "measured_in_gazebo": false
+    }
+  ]
+}

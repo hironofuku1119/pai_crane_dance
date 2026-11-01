@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>crane_dance</name>
+  <version>0.1.0</version>
+  <description>最終課題の再生ノード（お手本・npz の再生）</description>
+  <maintainer email="noreply@example.com">crane_dance</maintainer>
+  <license>TBD</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
